@@ -3907,6 +3907,55 @@ public class HttpTest extends HttpTestBase {
     await();
   }
 
+  /**
+   * Reproduction of
+   * io.vertx.core.VertxException: Connection was closed
+   *  at io.vertx.core.http.impl.ClientConnection.handleClosed(ClientConnection.java:305)
+   */
+  @Test
+  public void testRequestsTimeoutInQueueWithManyTimeouts() {
+
+    server.requestHandler(req -> {
+      vertx.setTimer(1000, id -> {
+        req.response().end();
+      });
+    });
+
+    client.close();
+    client = vertx.createHttpClient(new HttpClientOptions().setKeepAlive(true).setMaxPoolSize(10).setPipelining(true));
+
+    server.listen(onSuccess(s -> {
+      // Add some requests that should all timeout
+      for (int i = 0; i < 400; i++) {
+        HttpClientRequest req = client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp -> {
+          fail("Should not be called");
+        });
+        req.exceptionHandler(t -> {
+          if (!(t instanceof TimeoutException)) {
+            t.printStackTrace();
+          }
+          assertTrue(t instanceof TimeoutException);
+        });
+        req.setTimeout(500);
+        req.end();
+      }
+      // Now another request that should not timeout
+      HttpClientRequest req = client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp -> {
+        assertEquals(200, resp.statusCode());
+        testComplete();
+      });
+      req.exceptionHandler(t -> {
+        System.out.println("Request that should not timeout exception:");
+        t.printStackTrace();
+        fail("Should not throw exception");
+      });
+      req.setTimeout(3000);
+      req.end();
+    }));
+
+    await();
+  }
+
   @Test
   public void testServerOptionsCopiedBeforeUse() {
     server.close();
