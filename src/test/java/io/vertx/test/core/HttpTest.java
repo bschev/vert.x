@@ -589,7 +589,7 @@ public class HttpTest extends HttpTestBase {
     assertNotSame(keyStoreOptions, copy.getKeyCertOptions());
     assertEquals(ksPassword, ((JksOptions) copy.getKeyCertOptions()).getPassword());
     assertNotSame(trustStoreOptions, copy.getTrustOptions());
-    assertEquals(tsPassword, ((JksOptions) copy.getTrustOptions()).getPassword());
+    assertEquals(tsPassword, ((JksOptions)copy.getTrustOptions()).getPassword());
     assertEquals(1, copy.getEnabledCipherSuites().size());
     assertTrue(copy.getEnabledCipherSuites().contains(enabledCipher));
     assertEquals(1, copy.getCrlPaths().size());
@@ -1383,7 +1383,7 @@ public class HttpTest extends HttpTestBase {
         assertEquals(headers.size() + 1, resp.headers().size());
 
         headers.forEach((k,v) -> assertEquals(v, resp.headers().get(k)));
-        headers.forEach((k, v) -> assertEquals(v, resp.getHeader(k)));
+        headers.forEach((k,v) -> assertEquals(v, resp.getHeader(k)));
 
         testComplete();
       }).end();
@@ -1725,7 +1725,7 @@ public class HttpTest extends HttpTestBase {
       // Exception handler should be called for any requests in the pipeline if connection is closed
       for (int i = 0; i < numReqs; i++) {
         client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp -> fail("Connect should not be called")).
-            exceptionHandler(error -> latch.countDown()).endHandler(done -> fail()).end();
+          exceptionHandler(error -> latch.countDown()).endHandler(done -> fail()).end();
       }
     }));
     awaitLatch(latch);
@@ -1739,7 +1739,7 @@ public class HttpTest extends HttpTestBase {
     }).listen(DEFAULT_HTTP_PORT, onSuccess(s -> {
       // Exception handler should be called for any requests in the pipeline if connection is closed
       client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp ->
-              resp.exceptionHandler(t -> testComplete())).exceptionHandler(error -> fail()).end();
+          resp.exceptionHandler(t -> testComplete())).exceptionHandler(error -> fail()).end();
     }));
     await();
   }
@@ -2293,6 +2293,31 @@ public class HttpTest extends HttpTestBase {
 
     testComplete();
   }
+
+  @Test
+  public void testSendNonExistingFile() throws Exception {
+    server.requestHandler(req -> {
+      final Context ctx = vertx.getOrCreateContext();
+      req.response().sendFile("/not/existing/path", event -> {
+        assertEquals(ctx, vertx.getOrCreateContext());
+        if (event.failed()) {
+          req.response().end("failed");
+        }
+      });
+    });
+
+    server.listen(onSuccess(s -> {
+      client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp -> {
+        resp.bodyHandler(buff -> {
+          assertEquals("failed", buff.toString());
+          testComplete();
+        });
+      }).end();
+    }));
+
+    await();
+  }
+
 
   @Test
   public void testSendFileOverrideHeaders() throws Exception {
