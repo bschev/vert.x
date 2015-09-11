@@ -112,6 +112,7 @@ public abstract class ConnectionManager {
 
     // Called when the response has ended
     public synchronized void responseEnded(ClientConnection conn) {
+      System.out.println("responseEnded waiters: " + waiters.size()+ " conn.getOutstandingRequestCount: " + conn.getOutstandingRequestCount());
       if (pipelining || keepAlive) {
         Waiter waiter = waiters.poll();
         if (waiter != null) {
@@ -162,11 +163,15 @@ public abstract class ConnectionManager {
       }
       Waiter waiter = waiters.poll();
       if (waiter != null) {
+        System.out.println("## 1 waiters: " + waiters.size());
         // There's a waiter - so it can have a new connection
         createNewConnection(waiter.handler, waiter.connectionExceptionHandler, waiter.context);
       } else if (connCount == 0) {
+        System.out.println("## 2 waiters: " + waiters.size());
         // No waiters and no connections - remove the ConnQueue
         connQueues.remove(address);
+      }else{
+        System.out.println("## 3 waiters: " + waiters.size());
       }
     }
   }

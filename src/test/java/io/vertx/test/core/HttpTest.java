@@ -3951,7 +3951,7 @@ public class HttpTest extends HttpTestBase {
 
     server.listen(onSuccess(s -> {
       // Add some requests that should all timeout
-      for (int i = 0; i < 400; i++) {
+      for (int i = 0; i < 20; i++) {
         HttpClientRequest req = client.request(HttpMethod.GET, DEFAULT_HTTP_PORT, DEFAULT_HTTP_HOST, DEFAULT_TEST_URI, resp -> {
           fail("Should not be called");
         });

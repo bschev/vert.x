@@ -304,11 +304,14 @@ class ClientConnection extends ConnectionBase {
     // Connection was closed - call exception handlers for any requests in the pipeline or one being currently written
     Exception e = new VertxException("Connection was closed");
     for (HttpClientRequestImpl req: requests) {
-      req.handleException(e);
+      System.out.println("** 1");
+      req.handleException(e); // <<-- here the exception is triggered
     }
     if (currentRequest != null) {
+      System.out.println("** 2");
       currentRequest.handleException(e);
     } else if (currentResponse != null) {
+      System.out.println("** 3");
       currentResponse.handleException(e);
     }
   }
@@ -341,6 +344,14 @@ class ClientConnection extends ConnectionBase {
     }
     currentRequest = null;
     listener.requestEnded(this);
+  }
+
+  synchronized void endFailedRequest() {
+    System.out.println("endFailedRequest requests: " + requests.size());
+    requests.poll();
+    System.out.println("endFailedRequest requests after poll: " + requests.size());
+//    currentRequest = null;
+//    listener.requestEnded(this);
   }
 
   public String hostHeader() {

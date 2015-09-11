@@ -326,10 +326,17 @@ public class HttpClientRequestImpl implements HttpClientRequest {
     cancelOutstandingTimeoutTimer();
     exceptionOccurred = true;
     getExceptionHandler().handle(t);
+    if (conn == null) {
+      System.out.println("handleException conn == null");
+    }else{
+      System.out.println("handleException");
+      conn.endFailedRequest();
+    }
   }
 
   synchronized void handleResponse(HttpClientResponseImpl resp) {
     // If an exception occurred (e.g. a timeout fired) we won't receive the response.
+    System.out.println("handleResponse exceptionOccurred: " + exceptionOccurred);
     if (!exceptionOccurred) {
       cancelOutstandingTimeoutTimer();
       try {
