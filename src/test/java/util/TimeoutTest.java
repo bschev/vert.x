@@ -20,8 +20,8 @@ public class TimeoutTest extends AbstractVerticle {
   @Override
   public void start() throws Exception {
 
-
-    HttpClient client = vertx.createHttpClient(new HttpClientOptions().setKeepAlive(true).setMaxPoolSize(10).setPipelining(true));
+    final HttpClientOptions httpClientOpts = new HttpClientOptions().setKeepAlive(true).setMaxPoolSize(10).setPipelining(true);//.setIdleTimeout(1);
+    HttpClient client = vertx.createHttpClient(httpClientOpts);
 
     vertx.createHttpServer().requestHandler(request -> {
       String toAttr = request.getParam("t");
@@ -49,7 +49,6 @@ public class TimeoutTest extends AbstractVerticle {
         req.exceptionHandler(t -> {
           System.err.println("" + t.getMessage());
 
-          t.printStackTrace();
         });
         req.setTimeout(3300);
         req.end();
