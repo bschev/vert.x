@@ -112,6 +112,10 @@ public abstract class ConnectionManager {
 
     // Called when the response has ended
     public synchronized void responseEnded(ClientConnection conn) {
+      System.out.println("availableConnections: " + availableConnections.size());
+      System.out.println("allConnections: " + allConnections.size());
+      System.out.println("waiters: " + waiters.size());
+      System.out.println("getOutstandingRequestCount: " + conn.getOutstandingRequestCount());
       if (pipelining || keepAlive) {
         Waiter waiter = waiters.poll();
         if (waiter != null) {
@@ -124,6 +128,7 @@ public abstract class ConnectionManager {
         // Close it now
         conn.close();
       }
+
     }
 
     void closeAllConnections() {
